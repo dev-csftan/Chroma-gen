@@ -114,7 +114,7 @@ def download_from_generate(
     params = {"token": read_key(key_directory), "weights": weights_name}
 
     # Perform the GET request with the token as a query parameter
-    response = requests.get(base_url, params=params)
+    response = requests.get(base_url, params=params, verify=False)
     response.raise_for_status()  # Raise an error for HTTP errors
 
     with open(destination, "wb") as file:
