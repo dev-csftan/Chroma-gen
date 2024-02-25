@@ -6,8 +6,6 @@
 
 *.csv
 *.tsv
-*.pdb
-*.cif
 *.pk
 *.pt
 *.fasta
