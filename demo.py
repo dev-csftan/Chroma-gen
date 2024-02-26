@@ -93,9 +93,9 @@ def proteinSample(length,steps,output):
         chain_lengths=[length], steps=steps, full_output=True,
     )
     render(protein, trajectories, output=output)
-def getProteinDemo(style,resn):
-    st.sidebar.title("First demo")
-    st.sidebar.header("Get a protein!")
+def GenerateProteinDemo(style,resn):
+    #st.sidebar.title("Unconditional Generation")
+    st.sidebar.header("Generate a Protein Backbone")
     length=st.sidebar.number_input("length",min_value=50,max_value=250,step=10,value=160,key='length')
     steps_protein=st.sidebar.number_input("steps",min_value=150,max_value=500,step=50,value=200,key='steps_protein')
     
@@ -116,8 +116,8 @@ def complexSample(chain1_length,chain2_length,chain3_length,chain4_length,steps,
     )
     render(protein, trajectories, output=output)
 def complexSampleDemo(style,resn):
-    st.sidebar.title("Second demo")
-    st.sidebar.header("Get a complex")
+    #st.sidebar.title("Generate a Protein Complex")
+    st.sidebar.header("Generate a Protein Complex")
     st.caption("Given the lengths of individual chains, Chroma can generate a complex.")
     chain1_length=st.sidebar.number_input("chain1_length,step=10",min_value=100,max_value=500,step=10,value=400,key='chain1_length')
     chain2_length=st.sidebar.number_input("chain2_length,step=10",min_value=0,max_value=200,step=10,value=100,key='chain2_length')
@@ -144,8 +144,8 @@ def symmetricSample(subunit_size,conditioner,output):
     )
     render(symmetric_protein, trajectories, output=output)
 def symmetricSampleDemo(style,resn):
-    st.sidebar.title("Third demo")
-    st.sidebar.header(" Symmetry")
+    #st.sidebar.title("Generate a Symmetric Protein Backbone")
+    st.sidebar.header("Conditional Generation on Symmetry")
     st.caption(" Specify the desired symmetry type and the size of a single subunit.")
     output="./output/symmetric_protein.pdb"
     symmetry_group=st.sidebar.text_input('symmetry_group:@param ["C_2", "C_3", "C_4", "C_5", "C_6", "C_7", "C_8", "D_2", "D_3", "D_4", "D_5", "D_6", "D_7", "D_8", "T", "O", "I"]',"C_7")
@@ -168,9 +168,9 @@ def shapeSample(length,conditioner,output):
 
     render(shaped_protein, trajectories, output=output)
 def shapeSampleDemo(style,resn):
-    st.sidebar.title("Fourth demo")
-    st.sidebar.header(" Shape")
-    st.caption(" reate a protein in the shape of a desired character of arbitrary length.")
+    #st.sidebar.title("Generate a Shapped Protein Backbone")
+    st.sidebar.header("Conditional Generation on Shape")
+    st.caption("create a protein in the shape of a desired character of arbitrary length.")
 
     output="./output/shaped_protein.pdb"
     character=st.sidebar.text_input('character:@param {type:"string"}','G',key='character')
@@ -197,8 +197,8 @@ def foldSample(length,conditioner,output):
     )
     render(cath_conditioned_protein, trajectories, output=output)
 def foldSampleDemo(style,resn):
-    st.sidebar.title("Fifth demo")
-    st.sidebar.header(" Fold")
+    #st.sidebar.title("Generate a Chain-level Conditioned Protein")
+    st.sidebar.header("Conditional Generation on Chain-level Properties")
     st.caption("Input a [CATH number](https://cathdb.info/browse) to get chain-level conditioning, e.g. `3.40.50` for a Rossmann fold or `2` for mainly beta.")
 
     output="./output/cath_conditioned_protein.pdb"
@@ -219,8 +219,8 @@ def ssSample(conditioner,SS,output):
     )
     render(ss_conditioned_protein, trajectories, output=output)
 def ssSampleDemo(style,resn):
-    st.sidebar.title("Sixth demo")
-    st.sidebar.header(" Secondary structure ")
+    #st.sidebar.title("Generate a Secondary Structure Conditioned Protein")
+    st.sidebar.header(" Conditional Generation on Secondary Structure Properties")
     st.caption("Enter a string to specify residue-level secondary structure conditioning: H = helix, E = strand, T = turn.")
 
     output="./output/ss_conditioned_protein.pdb"
@@ -251,8 +251,8 @@ def substructureSample(protein,conditioner,output):
     )
     render(infilled_protein, trajectories, output=output)
 def substructureSampleDemo(style,resn):
-    st.sidebar.title("Eigth demo")
-    st.sidebar.header(" Substructure ")
+    st.sidebar.title("Generate a Sub-Structure Conditioned Protein")
+    #st.sidebar.header(" Conditional Generation on Substructure Properties")
     st.caption("Enter a PDB ID and a selection string corresponding to designable positions.")
     st.caption("Using a substructure conditioner, Chroma can design at these positions while holding the rest of the structure fixed.")
     st.caption("The default selection cuts the protein in half and fills it in.")

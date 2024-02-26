@@ -2,32 +2,33 @@ import streamlit as st
 import demo
 
 st.set_page_config(
-    page_title="Chroma Demos",
+    page_title="GenAI for Protein Design",
     page_icon="🧬",
     layout="wide",
     initial_sidebar_state="expanded",
 )
 
-st.title("Protein Design Demos for Chroma")
+st.title("Protein Design Driven by Chroma")
 
 # sidebar
-st.sidebar.header("Demo Config")
+#st.sidebar.header("Config")
 
-# 创建字典映射demo
+# the mapping between the function and use case
 demoDict={
-    "getProtein":demo.getProteinDemo,
-    "complexSample":demo.complexSampleDemo,
-    "symmetricSample":demo.symmetricSampleDemo,
-    "shapeSample":demo.shapeSampleDemo,
-    "foldSample":demo.foldSampleDemo,
-    "ssSample":demo.ssSampleDemo,
-    "substructureSample":demo.substructureSampleDemo,
+    "UnconditionalGenerate":demo.GenerateProteinDemo,
+    "ComplexGenerate":demo.complexSampleDemo,
+    "SymmetricGenerate":demo.symmetricSampleDemo,
+    "ShapeConstrainedGenerate":demo.shapeSampleDemo,
+    "FoldConditionGenerate":demo.foldSampleDemo,
+    "SecondStructureConditionGenerate":demo.ssSampleDemo,
+    "SubstructureConditionGenerate":demo.substructureSampleDemo,
 
 }
-# 在侧边栏中添加一个选择框，用于选择demo
-selected_branch = st.sidebar.selectbox("Select demo", list(demoDict.keys()))
-style=st.sidebar.selectbox("Select style:Can be 'stick', 'sphere', 'cross','cartoon'",('stick', 'sphere', 'cross','cartoon'),key='style')
-resn=st.sidebar.selectbox("Select display resn:PDB resn labels:['ALA','ARG','LYS','THR','TRP','TYR','VAL']",('','ALA','ARG','LYS','THR','TRP','TYR','VAL'),key='resn')
+# sidebar for demo options
+selected_branch = st.sidebar.selectbox("Select the Function to Run:", list(demoDict.keys()))
+style=st.sidebar.selectbox("Select Visualization Style:Can be 'stick', 'sphere', 'cross','cartoon'",('stick', 'sphere', 'cross','cartoon'),key='style')
+resn=st.sidebar.selectbox("Select the Amino Acid Type to Display",
+                          ('*', 'ALA','ARG','ASN','ASP','CYS','GLN','GLU','GLY','HIS','ILE','LEU','LYS','MET','PHE','PRO','SER','THR','TRP','TYR','VAL'),key='resn')
 
-# 执行选定分支对应的函数
+# Exectuion
 demoDict[selected_branch](style,resn)
