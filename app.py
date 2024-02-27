@@ -22,6 +22,9 @@ demoDict={
     "FoldConditionGenerate":demo.foldSampleDemo,
     "SecondStructureConditionGenerate":demo.ssSampleDemo,
     "SubstructureConditionGenerate":demo.substructureSampleDemo,
+    # "NatureLanguageConditionGenerate":demo.natureLanguageSampleDemo,
+    "CombiningSymmetryAndSecondaryConditionGenerate":demo.cSSStructureSampleDemo,
+    "MergingSymmetryAndSubstructureConditionGenerate":demo.mSSubstructureSampleDemo,
 
 }
 # sidebar for demo options

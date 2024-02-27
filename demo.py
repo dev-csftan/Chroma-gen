@@ -24,13 +24,19 @@ tqdm.__init__ = partialmethod(tqdm.__init__, leave=False)
 
 import streamlit as st
 from stmol import *
-def download(filename,description):
-    with open(filename, "rb") as file:
+
+def download_callback(newFileName):
+    st.success(f"{newFileName}: successfully downloaded ")
+def download(outputFile,newFileName,description):
+    with open(outputFile, "rb") as file:
         btn = st.download_button(
                 label=description,
                 data=file,
-                file_name=filename
+                file_name=newFileName,
             )
+        
+
+
 import pandas as pd
 def display(output,style,resn):
     # imformation
@@ -54,16 +60,19 @@ def display(output,style,resn):
     # 使用 stmol 展示蛋白质结构
     st.subheader("Protein Structure:")
     traj_output = output.replace(".pdb", "_trajectory.pdb")
-    download(output,"Download sample")
-    download(traj_output,"Download trajectory")
-    if resn !='':
+    
+    protein_newName = st.text_input("The specified file name. Default is {}.".format(output[output.rfind("/") + 1:])+"Please press [Enter] to confirm the change before download.", value=output[output.rfind("/") + 1:], key='protein_newName')
+    download(output,protein_newName,"Download sample")
+    traj_newName = st.text_input("The specified file name. Default is {}.".format(traj_output[traj_output.rfind("/") + 1:])+"Please press [Enter] to confirm the change before download.", value=traj_output[traj_output.rfind("/") + 1:], key='traj_newName')
+    download(traj_output,traj_newName,"Download trajectory")
+    if resn !='*':
         obj = render_pdb_resn(obj ,resn_lst =resn)
     showmol(obj, width=1800)
 
     
 
 
-def render(protein, trajectories, output="./output/.output/protein.pdb"):
+def render(protein, trajectories, output="./output/protein.pdb"):
     protein.to_PDB(output)
     traj_output = output.replace(".pdb", "_trajectory.pdb")
     trajectories["trajectory"].to_PDB(traj_output)
@@ -80,12 +89,11 @@ from chroma.utility.api import register_key
 from chroma.utility.chroma import letter_to_point_cloud, plane_split_protein
 
 register_key(api_key)
-device = "cpu"
+
+# device = 'cuda:2' if torch.cuda.is_available() else 'cpu'
+device='cpu'
 with contextlib.redirect_stdout(None):
     chroma = Chroma(device=device)
-
-
-
 
 
 def proteinSample(length,steps,output):
@@ -96,8 +104,8 @@ def proteinSample(length,steps,output):
 def GenerateProteinDemo(style,resn):
     #st.sidebar.title("Unconditional Generation")
     st.sidebar.header("Generate a Protein Backbone")
-    length=st.sidebar.number_input("length",min_value=50,max_value=250,step=10,value=160,key='length')
-    steps_protein=st.sidebar.number_input("steps",min_value=150,max_value=500,step=50,value=200,key='steps_protein')
+    length=st.sidebar.number_input("chain_length:The lengths of the protein chains.Default is [160],step=10.",min_value=50,max_value=250,step=10,value=160,key='length')
+    steps_protein=st.sidebar.number_input("sde_steps:The number of integration steps for the SDE.Default is 200,step=50.",min_value=150,max_value=500,step=50,value=200,key='steps_protein')
     
     output="./output/protein.pdb"
     if st.sidebar.button("Run Code with Button",key="protein"):
@@ -123,7 +131,7 @@ def complexSampleDemo(style,resn):
     chain2_length=st.sidebar.number_input("chain2_length,step=10",min_value=0,max_value=200,step=10,value=100,key='chain2_length')
     chain3_length=st.sidebar.number_input("chain3_length,step=1",min_value=0,max_value=200,step=10,value=100,key='chain3_length')
     chain4_length=st.sidebar.number_input("chain4_length,step=1",min_value=0,max_value=200,step=10,value=100,key='chain4_length')
-    steps_complex=st.sidebar.number_input("steps",min_value=150,max_value=500,step=50,value=200,key='steps_complex')
+    steps_complex=st.sidebar.number_input("sde_steps:The number of integration steps for the SDE.Default is 200,step=50.",min_value=150,max_value=500,step=50,value=200,key='steps_complex')
 
     output="./output/complex.pdb"
     if st.sidebar.button("Run Code with Button",key="complex"):
@@ -149,7 +157,7 @@ def symmetricSampleDemo(style,resn):
     st.caption(" Specify the desired symmetry type and the size of a single subunit.")
     output="./output/symmetric_protein.pdb"
     symmetry_group=st.sidebar.text_input('symmetry_group:@param ["C_2", "C_3", "C_4", "C_5", "C_6", "C_7", "C_8", "D_2", "D_3", "D_4", "D_5", "D_6", "D_7", "D_8", "T", "O", "I"]',"C_7")
-    subunit_size=st.sidebar.number_input("subunit_size,step=5",min_value=10,max_value=150,step=5,value=100,key='subunit_size')
+    subunit_size=st.sidebar.number_input("subunit_size:the size of a single subunit.Default is 100,step=5.",min_value=10,max_value=150,step=5,value=100,key='subunit_size')
     knbr=st.sidebar.number_input("knbr,step=1",min_value=1,max_value=10,step=1,value=2,key='knbr')
     conditioner = conditioners.SymmetryConditioner(
         G=symmetry_group, num_chain_neighbors=knbr
@@ -173,11 +181,11 @@ def shapeSampleDemo(style,resn):
     st.caption("create a protein in the shape of a desired character of arbitrary length.")
 
     output="./output/shaped_protein.pdb"
-    character=st.sidebar.text_input('character:@param {type:"string"}','G',key='character')
+    character=st.sidebar.text_input('character:a desired character for the shape of protein. @param {type:"string"}','G',key='character')
     if len(character) > 1:
         character = character[:1]
         print(f"Keeping only first character ({character})!")
-    length=st.sidebar.number_input('length,step=100',min_value=100,max_value=1500,step=100,value=1000,key='length_shape')
+    length=st.sidebar.number_input('chain_length:The lengths of the protein chains.Default is 500,step=100.',min_value=100,max_value=1500,step=100,value=500,key='length_shape')
     
     if st.sidebar.button("Run Code with Button",key="shape"):
         letter_point_cloud = letter_to_point_cloud(character)
@@ -202,8 +210,8 @@ def foldSampleDemo(style,resn):
     st.caption("Input a [CATH number](https://cathdb.info/browse) to get chain-level conditioning, e.g. `3.40.50` for a Rossmann fold or `2` for mainly beta.")
 
     output="./output/cath_conditioned_protein.pdb"
-    CATH=st.sidebar.text_input('CATH@param {type:"string"}','3.40.50',key='CATH')
-    length=st.sidebar.number_input('length,step=10',min_value=50,max_value=250,step=10,value=130,key='length_fold')
+    CATH=st.sidebar.text_input('CATH:protein domain annotations from <https://www.cathdb.info/>. Annotation examples include 2, 2.40, 2.40.155.','3.40.50',key='CATH')
+    length=st.sidebar.number_input('chain_length:The lengths of the protein chains.Default is 130,step=10.',min_value=50,max_value=250,step=10,value=130,key='length_fold')
 
     proclass_model = graph_classifier.load_model("named:public", device=device)
     conditioner = conditioners.ProClassConditioner("cath", CATH, model=proclass_model,device=device)
@@ -293,4 +301,81 @@ def substructureSampleDemo(style,resn):
         substructureSample(protein,conditioner,output)
     display(output,style,resn)
 
+def natureLanguageSample(conditioner,output):
+    caption_conditioned_protein,trajectories = chroma.sample(steps=200, chain_lengths=[110], conditioner=conditioner)
+    render(caption_conditioned_protein, trajectories, output=output)
 
+def natureLanguageSampleDemo(style,resn):
+    st.sidebar.title("Generate a Caption Guided Protein")
+    st.caption("Here, we demonstrate backbone generation conditioned on natural language prompts.")
+    st.caption(" The sampling is guided by the gradients of a structure to text model.")
+    CAPTION=st.sidebar.text_input('a caption:natural language prompts.',value='Crystal structure of SH2 domain',key='caption')
+    torch.manual_seed(0)
+    conditioner = conditioners.ProCapConditioner(CAPTION, -1).to(device)
+    output='./output/caption_conditioned_protein.pdb'
+    if st.sidebar.button("Run Code with Button",key="substructure"):
+        natureLanguageSample(conditioner,output)
+    
+    display(output,style,resn)
+
+# Combining Symmetry and Secondary Structure
+def cSSStructureSample(composedConditioner,output):
+    symm_beta_protein,trajectories = chroma.sample(chain_lengths=[100],
+        conditioner=composedConditioner,
+        langevin_factor=8,
+        inverse_temperature=8,
+        sde_func="langevin",
+        steps=500)
+    render(symm_beta_protein,trajectories,output=output)
+
+def cSSStructureSampleDemo(style,resn):
+    st.sidebar.title("Generate a Combined Symmetry and Secondary Structure Protein")
+    st.caption("In this scenario, we initially apply guidance for secondary structure to condition the content accordingly.")
+    st.caption("This is followed by incorporating Cyclic symmetry.")
+    st.caption("This approach involves adding a secondary structure classifier to conditionally sample an Asymmetric unit (AU) that is beta-rich, followed by symmetrization.")
+    output='./output/symm_beta.pdb'
+    CATH=st.sidebar.text_input('CATH:protein domain annotations from <https://www.cathdb.info/>. Annotation examples include 2, 2.40, 2.40.155.','2',key='CATH_beta')
+    beta = conditioners.ProClassConditioner('cath', CATH, weight=5, max_norm=20)
+    c_symmetry = conditioners.SymmetryConditioner(G="C_3", num_chain_neighbors=2)
+    composed_cond = conditioners.ComposedConditioner([beta, c_symmetry])
+    if st.sidebar.button("Run Code with Button",key="substructure"):
+        cSSStructureSample(composed_cond,output)
+    
+    display(output,style,resn)
+
+#  Merging Symmetry and Substructure
+def mSSubstructureSample(composedCondtioner,output):
+    protein, trajectories = chroma.sample(
+        protein_init=protein,
+        conditioner=composedCondtioner,
+        langevin_factor=4.0,
+        langevin_isothermal=True,
+        inverse_temperature=8.0,
+        sde_func='langevin',
+        steps=500,
+        full_output=True,
+    )
+    render(protein,trajectories,output)
+
+def mSSubstructureSampleDemo(style,resn):
+    st.sidebar.title("Generate a Merged Symmetry and Substructure Protein")
+    st.caption("Here, our goal is to construct symmetric assemblies from a single-chain protein, partially redesigning it to merge three identical AUs into a Cyclic complex.")
+    st.caption("We begin by defining the backbones targeted for redesign and then reposition the AU to prevent clashes during symmetrization.")
+    st.caption("This is followed by the symmetrization operation itself.")
+    output='./output/mss_protein.pdb'
+    pdb_id=st.sidebar.text_input("pdb_id@param ['5SV5', '6QAZ', '3BDI'] {allow-input:true}",'3BDI',key='pdb_id_mss')
+    protein = Protein(pdb_id, canonicalize=True, device=device)
+    # regenerate residues with X coord < 25 A and y coord < 25 A
+    substruct_conditioner = conditioners.SubstructureConditioner(
+        protein, backbone_model=chroma.backbone_network, selection="x < 25 and y < 25")
+
+    # C_3 symmetry
+    c_symmetry = conditioners.SymmetryConditioner(G="C_3", num_chain_neighbors=3)
+
+    # Composing
+    composed_cond = conditioners.ComposedConditioner([substruct_conditioner, c_symmetry])
+
+    if st.sidebar.button("Run Code with Button",key="substructure"):
+        mSSubstructureSample(composed_cond,output)
+    
+    display(output,style,resn)
