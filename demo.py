@@ -25,8 +25,6 @@ tqdm.__init__ = partialmethod(tqdm.__init__, leave=False)
 import streamlit as st
 from stmol import *
 
-def download_callback(newFileName):
-    st.success(f"{newFileName}: successfully downloaded ")
 def download(outputFile,newFileName,description):
     with open(outputFile, "rb") as file:
         btn = st.download_button(
@@ -40,7 +38,7 @@ def download(outputFile,newFileName,description):
 import pandas as pd
 def display(output,style,resn):
     # imformation
-    protein=Protein.from_PDB(output)
+    protein=Protein.from_PDB(output,device=device)
     st.subheader("Protein Information:")
     st.write(f"Device: {protein.device}")
     st.write(f"Protein Length: {len(protein)} residues")
@@ -49,7 +47,7 @@ def display(output,style,resn):
     # 显示 Protein 的序列
     st.subheader("Protein Sequence:")
     protein_sequence = protein.sequence(format="three-letter-list")
-    st.markdown(f"**My List:** {protein_sequence}")
+    st.markdown(f"**Protein Sequence:** {protein_sequence}")
     st.write(protein_sequence)
     # 显示 Protein 的结构
     with open(output, "r") as file:
@@ -90,8 +88,7 @@ from chroma.utility.chroma import letter_to_point_cloud, plane_split_protein
 
 register_key(api_key)
 
-# device = 'cuda:2' if torch.cuda.is_available() else 'cpu'
-device='cpu'
+device = 'cuda' if torch.cuda.is_available() else 'cpu'
 with contextlib.redirect_stdout(None):
     chroma = Chroma(device=device)
 
@@ -325,7 +322,7 @@ def cSSStructureSample(composedConditioner,output):
         langevin_factor=8,
         inverse_temperature=8,
         sde_func="langevin",
-        steps=500)
+        steps=500,full_output=True,)
     render(symm_beta_protein,trajectories,output=output)
 
 def cSSStructureSampleDemo(style,resn):
@@ -335,8 +332,12 @@ def cSSStructureSampleDemo(style,resn):
     st.caption("This approach involves adding a secondary structure classifier to conditionally sample an Asymmetric unit (AU) that is beta-rich, followed by symmetrization.")
     output='./output/symm_beta.pdb'
     CATH=st.sidebar.text_input('CATH:protein domain annotations from <https://www.cathdb.info/>. Annotation examples include 2, 2.40, 2.40.155.','2',key='CATH_beta')
-    beta = conditioners.ProClassConditioner('cath', CATH, weight=5, max_norm=20)
-    c_symmetry = conditioners.SymmetryConditioner(G="C_3", num_chain_neighbors=2)
+    weight=st.sidebar.number_input('weight : The weighting of the conditioner relative to the backbone model. Defaults is 5,step=1.',value=5,max_value=10,min_value=1,step=1,key='weight')
+    max_norm=st.sidebar.number_input(" max_norm: The maximum magnitude of the gradient, above which the magnitude is clipped. Defaults is 20,step=2.",max_value=30,min_value=10,value=20,step=2,key='max_norm')
+    beta = conditioners.ProClassConditioner('cath', CATH, weight=weight, max_norm=max_norm)
+    symmetry_group=st.sidebar.text_input('symmetry_group:@param ["C_2", "C_3", "C_4", "C_5", "C_6", "C_7", "C_8", "D_2", "D_3", "D_4", "D_5", "D_6", "D_7", "D_8", "T", "O", "I"]',value="C_3",key='symmetry_group_css')
+    knbr=st.sidebar.number_input("knbr:The number of neighbors to consider for each chain in the complex.Default is 2,step=1",min_value=1,max_value=10,step=1,value=2,key='knbr_css')
+    c_symmetry = conditioners.SymmetryConditioner(G=symmetry_group, num_chain_neighbors=knbr)
     composed_cond = conditioners.ComposedConditioner([beta, c_symmetry])
     if st.sidebar.button("Run Code with Button",key="substructure"):
         cSSStructureSample(composed_cond,output)
@@ -344,7 +345,7 @@ def cSSStructureSampleDemo(style,resn):
     display(output,style,resn)
 
 #  Merging Symmetry and Substructure
-def mSSubstructureSample(composedCondtioner,output):
+def mSSubstructureSample(protein,composedCondtioner,output):
     protein, trajectories = chroma.sample(
         protein_init=protein,
         conditioner=composedCondtioner,
@@ -370,12 +371,14 @@ def mSSubstructureSampleDemo(style,resn):
         protein, backbone_model=chroma.backbone_network, selection="x < 25 and y < 25")
 
     # C_3 symmetry
-    c_symmetry = conditioners.SymmetryConditioner(G="C_3", num_chain_neighbors=3)
+    symmetry_group=st.sidebar.text_input('symmetry_group:@param ["C_2", "C_3", "C_4", "C_5", "C_6", "C_7", "C_8", "D_2", "D_3", "D_4", "D_5", "D_6", "D_7", "D_8", "T", "O", "I"]',value="C_3",key='symmetry_group_mss')
+    knbr=st.sidebar.number_input("knbr:The number of neighbors to consider for each chain in the complex.Default is 3,step=1",min_value=1,max_value=10,step=1,value=3,key='knbr_mss')
+    c_symmetry = conditioners.SymmetryConditioner(G=symmetry_group, num_chain_neighbors=knbr)
 
     # Composing
     composed_cond = conditioners.ComposedConditioner([substruct_conditioner, c_symmetry])
 
     if st.sidebar.button("Run Code with Button",key="substructure"):
-        mSSubstructureSample(composed_cond,output)
+        mSSubstructureSample(protein,composed_cond,output)
     
     display(output,style,resn)
