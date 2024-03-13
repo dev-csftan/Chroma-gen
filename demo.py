@@ -7,7 +7,6 @@ import os
 os.environ["CUBLAS_WORKSPACE_CONFIG"] = ":4096:8"
 import contextlib
 
-api_key = "2cdade6d058b4fd1b85fa5badb501312"  # @param {type:"string"}
 
 
 import torch
@@ -25,6 +24,8 @@ tqdm.__init__ = partialmethod(tqdm.__init__, leave=False)
 import streamlit as st
 from stmol import *
 
+api_key='2cdade6d058b4fd1b85fa5badb501312'
+
 def download(outputFile,newFileName,description):
     with open(outputFile, "rb") as file:
         btn = st.download_button(
@@ -40,7 +41,7 @@ def display(output,style,resn):
     # imformation
     protein=Protein.from_PDB(output,device=device)
     st.subheader("Protein Information:")
-    st.write(f"Device: {protein.device}")
+    st.write(f"Device: GPU")
     st.write(f"Protein Length: {len(protein)} residues")
     st.write(f"Structured Residue Count: {protein.length(structured=True)}")
 
