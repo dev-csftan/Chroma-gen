@@ -45,18 +45,18 @@ def display(output,style,resn):
     st.write(f"Protein Length: {len(protein)} residues")
     st.write(f"Structured Residue Count: {protein.length(structured=True)}")
 
-    # 显示 Protein 的序列
+    # display Protein sequence
     st.subheader("Protein Sequence:")
     protein_sequence = protein.sequence(format="three-letter-list")
     st.markdown(f"**Protein Sequence:** {protein_sequence}")
     st.write(protein_sequence)
-    # 显示 Protein 的结构
+    # display Protein structure
     with open(output, "r") as file:
         pdb_content = file.read()
 
     obj = makeobj(pdb_content,style=style,background='white')
 
-    # 使用 stmol 展示蛋白质结构
+    # using stmol for 3d visualisation of protein structure
     st.subheader("Protein Structure:")
     traj_output = output.replace(".pdb", "_trajectory.pdb")
     
@@ -120,7 +120,7 @@ def format_option(option):
         'tspan': 'The time span for the SDE integration. Default is (1.0, 0.001).',
         'trajectory_length': 'The number of sampled steps in the trajectory output. Maximum is `steps`. Default 200.',
         'design_ban_S': 'List of amino acid single-letter codes to ban, e.g. `["C"]` to ban cysteines.',
-        'design_method': 'Specifies which method to use for design. Can be `potts` and `autoregressive`. Default is `potts`.',
+        'design_method': 'Specifies which method to use for design the side_chain. Can be `potts` and `autoregressive`. Default is `potts`.',
         'design_selection': 'Clamp selection for conditioning on a subsequence during sequence sampling. Can be either a selection string or a binary design mask indicating positions to be sampled with shape `(num_batch, num_residues)` or position-specific valid amino acid choices with shape `(num_batch, num_residues, num_alphabet)`.',
         'design_mask_sample': 'Binary design mask indicating which positions can be sampled with shape `(num_batch, num_residues)` or which amino acids can be sampled at which position with shape `(num_batch, num_residues, num_alphabet)`.',
         'design_t': 'Diffusion time for models trained with diffusion augmentation of input structures. Setting `t=0` or `t=None` will condition the model to treat the structure as exact coordinates, while values of `t > 0` will condition the model to treat structures as though they were drawn from noise-augmented ensembles with that noise level. For robust design (default) we recommend `t=0.5`, or for literal design we recommend `t=0.0`. May be a float or a tensor of shape `(num_batch)`.',
@@ -160,7 +160,7 @@ def selectBackboneArgs():
         trajectory_length: int = 200,
         full_output: bool = False,
     """
-    options=st.sidebar.multiselect('Choose backbone parameters for sampling',
+    options=st.sidebar.multiselect('Set the backbone arguments for sampling',
         ['samples','steps', 'chain_lengths','tspan', 'langevin_factor',
          'langevin_isothermal','inverse_temperature','trajectory_length','protein_init',
          'initialize_noise','integrate_func','sde_func'],
@@ -227,7 +227,7 @@ def selectSideChainArgs():
         potts_symmetry_order: int = None,
         verbose: bool = False,
     """
-    options = st.sidebar.multiselect('Choose side_chain parameters for sampling',
+    options = st.sidebar.multiselect('Set the side chain arguments for sampling',
         ['design_ban_S', 'design_method', 'design_selection', 'design_t', 'temperature_S', 'temperature_chi',
          'top_p_S', 'regularization', 'potts_mcmc_depth', 'potts_proposal', 'potts_symmetry_order', 'verbose'],
         [], format_func=format_option, key='sideChainArgs')
@@ -289,7 +289,7 @@ def conposeConditioner():
         [],format_func=format_option)
     conditioners_list=[]
 
-        # 判断每个选项是否被选择
+        # determine if an argument option is selected
     if 'ProClassConditioner' in options:
         container=st.sidebar.container(border=True)
         container.write('----ProClassConditioner is selected!------')

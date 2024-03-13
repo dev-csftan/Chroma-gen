@@ -9,7 +9,7 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
-st.title("Protein Design Driven by Chroma")
+st.title("Protein Design Driven by Diffusion Model")
 
 # sidebar
 #st.sidebar.header("Config")
@@ -24,8 +24,8 @@ demoDict={
     "SecondStructureConditionGenerate":demo.ssSampleDemo,
     "SubstructureConditionGenerate":demo.substructureSampleDemo,
     # "NatureLanguageConditionGenerate":demo.natureLanguageSampleDemo,
-    "CombiningSymmetryAndSecondaryConditionGenerate":demo.cSSStructureSampleDemo,
-    "MergingSymmetryAndSubstructureConditionGenerate":demo.mSSubstructureSampleDemo,
+    "SymmetryAndSecondaryConditionGenerate":demo.cSSStructureSampleDemo,
+    "SymmetryAndSubstructureConditionGenerate":demo.mSSubstructureSampleDemo,
 }
 # sidebar for demo options
 selected_branch = st.sidebar.selectbox("Select the Function to Run:", list(demoDict.keys()))
