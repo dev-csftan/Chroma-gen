@@ -1,98 +1,4 @@
-# @title Setup
-
-# @markdown [Get your API key here](https://chroma-weights.generatebiomedicines.com) and enter it below before running.
-
-import os
-
-os.environ["CUBLAS_WORKSPACE_CONFIG"] = ":4096:8"
-import contextlib
-
-
-
-import torch
-
-# torch.use_deterministic_algorithms(False)
-
-import warnings
-from tqdm import tqdm, TqdmExperimentalWarning
-
-warnings.filterwarnings("ignore", category=TqdmExperimentalWarning)
-from functools import partialmethod
-
-tqdm.__init__ = partialmethod(tqdm.__init__, leave=False)
-
-import streamlit as st
-from stmol import *
-
-api_key='2cdade6d058b4fd1b85fa5badb501312'
-
-def download(outputFile,newFileName,description):
-    with open(outputFile, "rb") as file:
-        btn = st.download_button(
-                label=description,
-                data=file,
-                file_name=newFileName,
-            )
-        
-
-
-import pandas as pd
-def display(output,style,resn):
-    # imformation
-    protein=Protein.from_PDB(output,device=device)
-    st.subheader("Protein Information:")
-    st.write(f"Device: GPU")
-    st.write(f"Protein Length: {len(protein)} residues")
-    st.write(f"Structured Residue Count: {protein.length(structured=True)}")
-
-    # display Protein sequence
-    st.subheader("Protein Sequence:")
-    protein_sequence = protein.sequence(format="three-letter-list")
-    st.markdown(f"**Protein Sequence:** {protein_sequence}")
-    st.write(protein_sequence)
-    # display Protein structure
-    with open(output, "r") as file:
-        pdb_content = file.read()
-
-    obj = makeobj(pdb_content,style=style,background='white')
-
-    # using stmol for 3d visualisation of protein structure
-    st.subheader("Protein Structure:")
-    traj_output = output.replace(".pdb", "_trajectory.pdb")
-    
-    protein_newName = st.text_input("The specified file name. Default is {}.".format(output[output.rfind("/") + 1:])+"Please press [Enter] to confirm the change before download.", value=output[output.rfind("/") + 1:], key='protein_newName')
-    download(output,protein_newName,"Download sample")
-    traj_newName = st.text_input("The specified file name. Default is {}.".format(traj_output[traj_output.rfind("/") + 1:])+"Please press [Enter] to confirm the change before download.", value=traj_output[traj_output.rfind("/") + 1:], key='traj_newName')
-    download(traj_output,traj_newName,"Download trajectory")
-    if resn !='*':
-        obj = render_pdb_resn(obj ,resn_lst =resn)
-    showmol(obj, width=1800)
-
-    
-
-
-def render(protein, trajectories, output="./output/protein.pdb"):
-    protein.to_PDB(output)
-    traj_output = output.replace(".pdb", "_trajectory.pdb")
-    trajectories["trajectory"].to_PDB(traj_output)
-
-    
-
-import locale
-
-locale.getpreferredencoding = lambda: "UTF-8"
-
-from chroma import Chroma, Protein, conditioners
-from chroma.models import graph_classifier, procap
-from chroma.utility.api import register_key
-from chroma.utility.chroma import letter_to_point_cloud, plane_split_protein
-
-register_key(api_key)
-
-device = 'cuda' if torch.cuda.is_available() else 'cpu'
-with contextlib.redirect_stdout(None):
-    chroma = Chroma(device=device)
-
+from utils import *
 
 def proteinSample(length,steps,output):
     protein, trajectories = chroma.sample(
@@ -110,9 +16,6 @@ def GenerateProteinDemo(style,resn):
         proteinSample(length,steps_protein,output)
 
     display(output,style,resn)
-
-
-
 
 def complexSample(chain1_length,chain2_length,chain3_length,chain4_length,steps,output):
     protein, trajectories = chroma.sample(
@@ -231,7 +134,7 @@ def ssSampleDemo(style,resn):
 
     output="./output/ss_conditioned_protein.pdb"
 
-    SS=st.sidebar.text_input('secondary structure @param {type:"string"}',"HHHHHHHTTTHHHHHHHTTTEEEEEETTTEEEEEEEETTTTHHHHHHHH")
+    SS=st.sidebar.text_input('SS:secondary structure @param {type:"string"}',"HHHHHHHTTTHHHHHHHTTTEEEEEETTTEEEEEEEETTTTHHHHHHHH")
 
     proclass_model = graph_classifier.load_model("named:public", device=device)
     conditioner = conditioners.ProClassConditioner(
@@ -260,7 +163,7 @@ def substructureSampleDemo(style,resn):
     st.sidebar.title("Generate a Sub-Structure Conditioned Protein")
     #st.sidebar.header(" Conditional Generation on Substructure Properties")
     st.caption("Enter a PDB ID and a selection string corresponding to designable positions.")
-    st.caption("Using a substructure conditioner, It can design at these positions while holding the rest of the structure fixed.")
+    st.caption("Using a substructure conditioner, Chroma can design at these positions while holding the rest of the structure fixed.")
     st.caption("The default selection cuts the protein in half and fills it in.")
     st.caption("Other selections, by position or proximity, are also allowed.")
 
@@ -361,7 +264,7 @@ def mSSubstructureSample(protein,composedCondtioner,output):
 
 def mSSubstructureSampleDemo(style,resn):
     st.sidebar.title("Generate a Merged Symmetry and Substructure Protein")
-    st.caption("The goal is to construct symmetric assemblies from a single-chain protein, partially redesigning it to merge three identical AUs into a Cyclic complex.")
+    st.caption("Here, our goal is to construct symmetric assemblies from a single-chain protein, partially redesigning it to merge three identical AUs into a Cyclic complex.")
     st.caption("We begin by defining the backbones targeted for redesign and then reposition the AU to prevent clashes during symmetrization.")
     st.caption("This is followed by the symmetrization operation itself.")
     output='./output/mss_protein.pdb'
