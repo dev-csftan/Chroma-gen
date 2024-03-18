@@ -1,9 +1,9 @@
 import streamlit as st
-import demo as demo
+import demo 
 
 
 st.set_page_config(
-    page_title="GenAI for Protein Design",
+    page_title="GenAI for Protein Design Use Case",
     page_icon="🧬",
     layout="wide",
     initial_sidebar_state="expanded",
@@ -11,8 +11,6 @@ st.set_page_config(
 
 st.title("Protein Design Driven by Diffusion Model")
 
-# sidebar
-#st.sidebar.header("Config")
 
 # the mapping between the function and use case
 demoDict={
@@ -35,3 +33,5 @@ resn=st.sidebar.selectbox("Select the Amino Acid Type to Display",
 
 # Exectuion
 demoDict[selected_branch](style,resn)
+
+

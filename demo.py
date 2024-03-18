@@ -1,98 +1,4 @@
-# @title Setup
-
-# @markdown [Get your API key here](https://chroma-weights.generatebiomedicines.com) and enter it below before running.
-
-import os
-
-os.environ["CUBLAS_WORKSPACE_CONFIG"] = ":4096:8"
-import contextlib
-
-
-
-import torch
-
-# torch.use_deterministic_algorithms(False)
-
-import warnings
-from tqdm import tqdm, TqdmExperimentalWarning
-
-warnings.filterwarnings("ignore", category=TqdmExperimentalWarning)
-from functools import partialmethod
-
-tqdm.__init__ = partialmethod(tqdm.__init__, leave=False)
-
-import streamlit as st
-from stmol import *
-
-api_key='2cdade6d058b4fd1b85fa5badb501312'
-
-def download(outputFile,newFileName,description):
-    with open(outputFile, "rb") as file:
-        btn = st.download_button(
-                label=description,
-                data=file,
-                file_name=newFileName,
-            )
-        
-
-
-import pandas as pd
-def display(output,style,resn):
-    # imformation
-    protein=Protein.from_PDB(output,device=device)
-    st.subheader("Protein Information:")
-    st.write(f"Device: GPU")
-    st.write(f"Protein Length: {len(protein)} residues")
-    st.write(f"Structured Residue Count: {protein.length(structured=True)}")
-
-    # display Protein sequence
-    st.subheader("Protein Sequence:")
-    protein_sequence = protein.sequence(format="three-letter-list")
-    st.markdown(f"**Protein Sequence:** {protein_sequence}")
-    st.write(protein_sequence)
-    # display Protein structure
-    with open(output, "r") as file:
-        pdb_content = file.read()
-
-    obj = makeobj(pdb_content,style=style,background='white')
-
-    # using stmol for 3d visualisation of protein structure
-    st.subheader("Protein Structure:")
-    traj_output = output.replace(".pdb", "_trajectory.pdb")
-    
-    protein_newName = st.text_input("The specified file name. Default is {}.".format(output[output.rfind("/") + 1:])+"Please press [Enter] to confirm the change before download.", value=output[output.rfind("/") + 1:], key='protein_newName')
-    download(output,protein_newName,"Download sample")
-    traj_newName = st.text_input("The specified file name. Default is {}.".format(traj_output[traj_output.rfind("/") + 1:])+"Please press [Enter] to confirm the change before download.", value=traj_output[traj_output.rfind("/") + 1:], key='traj_newName')
-    download(traj_output,traj_newName,"Download trajectory")
-    if resn !='*':
-        obj = render_pdb_resn(obj ,resn_lst =resn)
-    showmol(obj, width=1800)
-
-    
-
-
-def render(protein, trajectories, output="./output/protein.pdb"):
-    protein.to_PDB(output)
-    traj_output = output.replace(".pdb", "_trajectory.pdb")
-    trajectories["trajectory"].to_PDB(traj_output)
-
-    
-
-import locale
-
-locale.getpreferredencoding = lambda: "UTF-8"
-
-from chroma import Chroma, Protein, conditioners
-from chroma.models import graph_classifier, procap
-from chroma.utility.api import register_key
-from chroma.utility.chroma import letter_to_point_cloud, plane_split_protein
-
-register_key(api_key)
-
-device = 'cuda' if torch.cuda.is_available() else 'cpu'
-with contextlib.redirect_stdout(None):
-    chroma = Chroma(device=device)
-
+from utils import *
 
 def proteinSample(length,steps,output):
     protein, trajectories = chroma.sample(
@@ -111,9 +17,6 @@ def GenerateProteinDemo(style,resn):
 
     display(output,style,resn)
 
-
-
-
 def complexSample(chain1_length,chain2_length,chain3_length,chain4_length,steps,output):
     protein, trajectories = chroma.sample(
         chain_lengths=[chain1_length, chain2_length, chain3_length, chain4_length],
@@ -124,7 +27,7 @@ def complexSample(chain1_length,chain2_length,chain3_length,chain4_length,steps,
 def complexSampleDemo(style,resn):
     #st.sidebar.title("Generate a Protein Complex")
     st.sidebar.header("Generate a Protein Complex")
-    st.caption("Given the lengths of individual chains, Chroma can generate a complex.")
+    st.caption("Given the lengths of individual chains, It can generate a complex.")
     chain1_length=st.sidebar.number_input("chain1_length,step=10",min_value=100,max_value=500,step=10,value=400,key='chain1_length')
     chain2_length=st.sidebar.number_input("chain2_length,step=10",min_value=0,max_value=200,step=10,value=100,key='chain2_length')
     chain3_length=st.sidebar.number_input("chain3_length,step=1",min_value=0,max_value=200,step=10,value=100,key='chain3_length')
@@ -331,7 +234,9 @@ def cSSStructureSampleDemo(style,resn):
     st.caption("In this scenario, we initially apply guidance for secondary structure to condition the content accordingly.")
     st.caption("This is followed by incorporating Cyclic symmetry.")
     st.caption("This approach involves adding a secondary structure classifier to conditionally sample an Asymmetric unit (AU) that is beta-rich, followed by symmetrization.")
+    
     output='./output/symm_beta.pdb'
+    
     CATH=st.sidebar.text_input('CATH:protein domain annotations from <https://www.cathdb.info/>. Annotation examples include 2, 2.40, 2.40.155.','2',key='CATH_beta')
     weight=st.sidebar.number_input('weight : The weighting of the conditioner relative to the backbone model. Defaults is 5,step=1.',value=5,max_value=10,min_value=1,step=1,key='weight')
     max_norm=st.sidebar.number_input(" max_norm: The maximum magnitude of the gradient, above which the magnitude is clipped. Defaults is 20,step=2.",max_value=30,min_value=10,value=20,step=2,key='max_norm')
@@ -364,7 +269,9 @@ def mSSubstructureSampleDemo(style,resn):
     st.caption("The goal is to construct symmetric assemblies from a single-chain protein, partially redesigning it to merge three identical AUs into a Cyclic complex.")
     st.caption("We begin by defining the backbones targeted for redesign and then reposition the AU to prevent clashes during symmetrization.")
     st.caption("This is followed by the symmetrization operation itself.")
+    
     output='./output/mss_protein.pdb'
+    
     pdb_id=st.sidebar.text_input("pdb_id@param ['5SV5', '6QAZ', '3BDI'] {allow-input:true}",'3BDI',key='pdb_id_mss')
     protein = Protein(pdb_id, canonicalize=True, device=device)
     # regenerate residues with X coord < 25 A and y coord < 25 A
