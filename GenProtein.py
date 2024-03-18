@@ -12,7 +12,7 @@ st.markdown(
      GenProtein is a framework tailored specifically for GenAI based Protein Design.
 
 **👈 Select the Use Case Demo from the sidebar** to see some capabilities
-    of what GenProtein can do!!
+    of what GenProtein can do!
     ### Want to learn more?
     - Jump into [documentation](https://www.nature.com/articles/s41586-023-06728-8)
 """
