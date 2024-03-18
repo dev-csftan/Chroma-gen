@@ -234,7 +234,9 @@ def cSSStructureSampleDemo(style,resn):
     st.caption("In this scenario, we initially apply guidance for secondary structure to condition the content accordingly.")
     st.caption("This is followed by incorporating Cyclic symmetry.")
     st.caption("This approach involves adding a secondary structure classifier to conditionally sample an Asymmetric unit (AU) that is beta-rich, followed by symmetrization.")
+    
     output='./output/symm_beta.pdb'
+    
     CATH=st.sidebar.text_input('CATH:protein domain annotations from <https://www.cathdb.info/>. Annotation examples include 2, 2.40, 2.40.155.','2',key='CATH_beta')
     weight=st.sidebar.number_input('weight : The weighting of the conditioner relative to the backbone model. Defaults is 5,step=1.',value=5,max_value=10,min_value=1,step=1,key='weight')
     max_norm=st.sidebar.number_input(" max_norm: The maximum magnitude of the gradient, above which the magnitude is clipped. Defaults is 20,step=2.",max_value=30,min_value=10,value=20,step=2,key='max_norm')
@@ -267,7 +269,9 @@ def mSSubstructureSampleDemo(style,resn):
     st.caption("The goal is to construct symmetric assemblies from a single-chain protein, partially redesigning it to merge three identical AUs into a Cyclic complex.")
     st.caption("We begin by defining the backbones targeted for redesign and then reposition the AU to prevent clashes during symmetrization.")
     st.caption("This is followed by the symmetrization operation itself.")
+    
     output='./output/mss_protein.pdb'
+    
     pdb_id=st.sidebar.text_input("pdb_id@param ['5SV5', '6QAZ', '3BDI'] {allow-input:true}",'3BDI',key='pdb_id_mss')
     protein = Protein(pdb_id, canonicalize=True, device=device)
     # regenerate residues with X coord < 25 A and y coord < 25 A

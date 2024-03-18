@@ -5,15 +5,14 @@ st.set_page_config(
     page_icon="👋",
 )
 
-st.write("# Welcome to ProteinDesignDemo! 👋")
+st.write("# Welcome to GenProtein! 👋")
 
 st.markdown(
     """
-    ProteinDesignDemo is an demo framework built specifically for
-    protein design.
+     GenProtein is a framework tailored specifically for GenAI based Protein Design.
 
-**👈 Select a page from the sidebar** to see some examples
-    of what ProteinDesignDemo can do!
+**👈 Select the Use Case Demo from the sidebar** to see some capabilities
+    of what GenProtein can do!!
     ### Want to learn more?
     - Jump into [documentation](https://www.nature.com/articles/s41586-023-06728-8)
 """
