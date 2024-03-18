@@ -27,7 +27,7 @@ def complexSample(chain1_length,chain2_length,chain3_length,chain4_length,steps,
 def complexSampleDemo(style,resn):
     #st.sidebar.title("Generate a Protein Complex")
     st.sidebar.header("Generate a Protein Complex")
-    st.caption("Given the lengths of individual chains, Chroma can generate a complex.")
+    st.caption("Given the lengths of individual chains, It can generate a complex.")
     chain1_length=st.sidebar.number_input("chain1_length,step=10",min_value=100,max_value=500,step=10,value=400,key='chain1_length')
     chain2_length=st.sidebar.number_input("chain2_length,step=10",min_value=0,max_value=200,step=10,value=100,key='chain2_length')
     chain3_length=st.sidebar.number_input("chain3_length,step=1",min_value=0,max_value=200,step=10,value=100,key='chain3_length')
@@ -134,7 +134,7 @@ def ssSampleDemo(style,resn):
 
     output="./output/ss_conditioned_protein.pdb"
 
-    SS=st.sidebar.text_input('SS:secondary structure @param {type:"string"}',"HHHHHHHTTTHHHHHHHTTTEEEEEETTTEEEEEEEETTTTHHHHHHHH")
+    SS=st.sidebar.text_input('secondary structure @param {type:"string"}',"HHHHHHHTTTHHHHHHHTTTEEEEEETTTEEEEEEEETTTTHHHHHHHH")
 
     proclass_model = graph_classifier.load_model("named:public", device=device)
     conditioner = conditioners.ProClassConditioner(
@@ -163,7 +163,7 @@ def substructureSampleDemo(style,resn):
     st.sidebar.title("Generate a Sub-Structure Conditioned Protein")
     #st.sidebar.header(" Conditional Generation on Substructure Properties")
     st.caption("Enter a PDB ID and a selection string corresponding to designable positions.")
-    st.caption("Using a substructure conditioner, Chroma can design at these positions while holding the rest of the structure fixed.")
+    st.caption("Using a substructure conditioner, It can design at these positions while holding the rest of the structure fixed.")
     st.caption("The default selection cuts the protein in half and fills it in.")
     st.caption("Other selections, by position or proximity, are also allowed.")
 
@@ -264,7 +264,7 @@ def mSSubstructureSample(protein,composedCondtioner,output):
 
 def mSSubstructureSampleDemo(style,resn):
     st.sidebar.title("Generate a Merged Symmetry and Substructure Protein")
-    st.caption("Here, our goal is to construct symmetric assemblies from a single-chain protein, partially redesigning it to merge three identical AUs into a Cyclic complex.")
+    st.caption("The goal is to construct symmetric assemblies from a single-chain protein, partially redesigning it to merge three identical AUs into a Cyclic complex.")
     st.caption("We begin by defining the backbones targeted for redesign and then reposition the AU to prevent clashes during symmetrization.")
     st.caption("This is followed by the symmetrization operation itself.")
     output='./output/mss_protein.pdb'

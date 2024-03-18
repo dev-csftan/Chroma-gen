@@ -6,7 +6,7 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="expanded",
 )
-st.title("Protein Design Driven by Chroma")
+st.title("Protein Design Driven by Diffusion Model")
 
 
 def composeSample(composed_cond,output,**kwargs):
@@ -55,7 +55,7 @@ def format_option(option):
         'tspan': 'The time span for the SDE integration. Default is (1.0, 0.001).',
         'trajectory_length': 'The number of sampled steps in the trajectory output. Maximum is `steps`. Default 200.',
         'design_ban_S': 'List of amino acid single-letter codes to ban, e.g. `["C"]` to ban cysteines.',
-        'design_method': 'Specifies which method to use for design. Can be `potts` and `autoregressive`. Default is `potts`.',
+        'design_method': 'Specifies which method to use for design the side_chain. Can be `potts` and `autoregressive`. Default is `potts`.',
         'design_selection': 'Clamp selection for conditioning on a subsequence during sequence sampling. Can be either a selection string or a binary design mask indicating positions to be sampled with shape `(num_batch, num_residues)` or position-specific valid amino acid choices with shape `(num_batch, num_residues, num_alphabet)`.',
         'design_mask_sample': 'Binary design mask indicating which positions can be sampled with shape `(num_batch, num_residues)` or which amino acids can be sampled at which position with shape `(num_batch, num_residues, num_alphabet)`.',
         'design_t': 'Diffusion time for models trained with diffusion augmentation of input structures. Setting `t=0` or `t=None` will condition the model to treat the structure as exact coordinates, while values of `t > 0` will condition the model to treat structures as though they were drawn from noise-augmented ensembles with that noise level. For robust design (default) we recommend `t=0.5`, or for literal design we recommend `t=0.0`. May be a float or a tensor of shape `(num_batch)`.',
@@ -66,11 +66,11 @@ def format_option(option):
         'potts_mcmc_depth': 'Depth of sampling (number of steps per alphabet letter times number of sites) per cycle.',
         'potts_proposal': 'MCMC proposal for Potts sampling. Currently implemented proposals are `dlmc` (default) for Discrete Langevin Monte Carlo [1] or `chromatic` for graph-colored block Gibbs sampling. [1] Sun et al. Discrete Langevin Sampler via Wasserstein Gradient Flow (2023).',
         'potts_symmetry_order': 'Symmetric design. The first `(num_nodes // symmetry_order)` residues in the protein system will be variable, and all consecutively tiled sets of residues will be locked to these during decoding. Internally this is accomplished by summing the parameters Potts model under a symmetry constraint into this reduced sized system and then back imputing at the end. Currently only implemented for Potts models.',
-        'SubsequenceConditioner':' Chroma Conditioning module which, given a GraphDesign model and a subset ofresidues for which sequence information is known, can add gradients to samplingthat bias the samples towards increased `log p(sequence | structure)`',
+        'SubsequenceConditioner':' Conditioning module which, given a GraphDesign model and a subset ofresidues for which sequence information is known, can add gradients to samplingthat bias the samples towards increased `log p(sequence | structure)`',
         'ShapeConditioner':'Volumetric potential for optimizing towards arbitrary geometries.',
         'ProCapConditioner':'Natural language conditioning for protein backbones.This conditioner uses an underlying `ProteinCaption` model to determine thelikelihood of a noised structure corresponding to a given caption. Captionscan be specified as corresopnding to a particular chain of the structure, or to the entire complex. The encoded structures and captions are passed to themodel together, and the output loss that adjusts the energy is the masked cross-entropy over the caption tokens.',
-        'ProClassConditioner':'A Chroma Conditioning module which can specify chain level annotations for fold,function, and organism. The current labels that can be conditioned on are:',
-        'SubstructureConditioner':'A Chroma Conditioning module which can specifiy a subset of residues for which to condition on absolute atomic coordinates, see supplementary section M for more details.',
+        'ProClassConditioner':'A Conditioning module which can specify chain level annotations for fold,function, and organism. The current labels that can be conditioned on are:',
+        'SubstructureConditioner':'A Conditioning module which can specifiy a subset of residues for which to condition on absolute atomic coordinates, see supplementary section M for more details.',
         'SymmetryConditioner':' A symmetry conditioner applies a set of symmetry operations to a protein structure and enforces constraints on the resulting conformations. It can be used to model symmetric complexes or assemblies of proteins.',
         'verbose':' bool = False',
     }
@@ -98,7 +98,7 @@ def selectBackboneArgs(main_para_container):
     """
     container=main_para_container.container(border=True)
     container.title('Backbone Args')
-    options=container.multiselect(label='Choose backbone parameters for sampling',
+    options=container.multiselect(label='Set the backbone arguments for sampling',
         options=['samples','steps', 'chain_lengths','tspan', 'langevin_factor',
          'langevin_isothermal','inverse_temperature','trajectory_length','protein_init',
          'initialize_noise','integrate_func','sde_func'],
@@ -173,7 +173,7 @@ def selectSideChainArgs(main_para_container):
     """
     container = main_para_container.container(border=True)
     container.title('Sidechain Args')
-    options = container.multiselect('Choose side_chain parameters for sampling',
+    options = container.multiselect('Set the side_chain arguments for sampling',
         ['design_ban_S', 'design_method', 'design_selection', 'design_t', 'temperature_S', 'temperature_chi',
          'top_p_S', 'regularization', 'potts_mcmc_depth', 'potts_proposal',  'verbose'],
         [], format_func=format_option, key='sideChainArgs')
@@ -182,11 +182,9 @@ def selectSideChainArgs(main_para_container):
     parameters = {}
     
     if 'design_ban_S' in options:
-        # Placeholder value, modify according to your requirements
         parameters['design_ban_S'] = container.multiselect('design_ban_S:Select banned residues for design', ['ALA','ARG','ASN','ASP','CYS','GLN','GLU','GLY','HIS','ILE','LEU','LYS','MET','PHE','PRO','SER','THR','TRP','TYR','VAL'], default=[])
 
     if 'design_method' in options:
-        # Placeholder value, modify according to your requirements
         parameters['design_method'] = container.selectbox('design_method:Select design method', ['potts', 'autoregressive'], index=0,key='design_method')
 
     if 'design_selection' in options:
@@ -217,18 +215,15 @@ def selectSideChainArgs(main_para_container):
         parameters['temperature_chi'] = container.number_input('temperature_chi:Temperature for chi angle sampling.Default 1e-3.', value=1e-3, key='temperature_chi')
 
     if 'top_p_S' in options:
-        # Placeholder value, modify according to your requirements
         parameters['top_p_S'] = container.number_input('top_p_S(float, optional)Top-p sampling cutoff for autoregressiv sampling.', value=0.8,key='top_p_S')
 
     if 'regularization' in options:
-        # Placeholder value, modify according to your requirements
         parameters['regularization'] = container.selectbox('regularization(str, optional): Complexity regularization for sampling.', ['LCP'], index=0)
 
     if 'potts_mcmc_depth' in options:
         parameters['potts_mcmc_depth'] = container.number_input('potts_mcmc_depth(int, optional)Enter MCMC depth for Potts per cycle', min_value=50,value=500, step=50,key='potts_mcmc_depth')
 
     if 'potts_proposal' in options:
-        # Placeholder value, modify according to your requirements
         parameters['potts_proposal'] = container.selectbox("""potts_proposal:MCMC proposal for Potts sampling. Currently implemented
                     proposals are `dlmc` (default) for Discrete Langevin Monte Carlo or
                     `chromatic` for graph-colored block Gibbs sampling.""", 
@@ -259,7 +254,7 @@ def conposeConditioner(main_cond_container):
     if 'ProClassConditioner' in options:
         container=main_cond_container.container(border=True)
         container.title('ProClassConditioner')
-        container.caption('A Chroma Conditioning module which can specify chain level annotations for fold,function, and organism. ')
+        container.caption('A Conditioning module which can specify chain level annotations for fold,function, and organism. ')
         container.caption("""Note:This conditioner is a research preview. Conditioning with it can be inconsistent
         and depends on the relative prevalence of a given label in the dataset.
         With repeated tries it will produce successful results for more abundant labels.
@@ -322,7 +317,7 @@ def conposeConditioner(main_cond_container):
     if 'SubsequenceConditioner' in options:
         container=main_cond_container.container(border=True)
         container.title('SubsequnceConditoner')
-        container.caption("""A Chroma Conditioning module which, given a GraphDesign model and a subset of
+        container.caption("""A Conditioning module which, given a GraphDesign model and a subset of
                             residues for which sequence information is known, can add gradients to sampling
                             that bias the samples towards increased `log p(sequence | structure)`""")
         
@@ -379,7 +374,7 @@ def conposeConditioner(main_cond_container):
     if 'SubstructureConditioner' in options:
         container=main_cond_container.container(border=True)
         container.title('SubstructureConditioner')
-        container.caption("""A Chroma Conditioning module which can specifiy a subset of residues for which to
+        container.caption("""A Conditioning module which can specifiy a subset of residues for which to
                             condition on absolute atomic coordinates, see supplementary section M for more
                             details.""")
 
@@ -410,7 +405,7 @@ def conposeConditioner(main_cond_container):
         
         gamma=container.selectbox(""" gamma (Optional[float]): Gamma inflates the translational degree of freedom
                                     of the underlying conditional multivariate normal, making it easier for
-                                    Chroma to move the center of mass of the infilled samples.
+                                    model to move the center of mass of the infilled samples.
                                     Setting to [0.01, 0.1, 1.0] is a a plausible place to start to increase
                                     sample Rg.""",
                                     [0.01, 0.1, 1.0],key='gamma')

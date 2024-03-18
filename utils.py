@@ -49,18 +49,18 @@ def display(output,style,resn):
     st.write(f"Protein Length: {len(protein)} residues")
     st.write(f"Structured Residue Count: {protein.length(structured=True)}")
 
-    # 显示 Protein 的序列
+    # display Protein sequence
     st.subheader("Protein Sequence:")
     protein_sequence = protein.sequence(format="three-letter-list")
     st.markdown(f"**Protein Sequence:** {protein_sequence}")
     st.write(protein_sequence)
-    # 显示 Protein 的结构
+    # display Protein structure
     with open(output, "r") as file:
         pdb_content = file.read()
 
     obj = makeobj(pdb_content,style=style,background='white')
 
-    # 使用 stmol 展示蛋白质结构
+    # using stmol for 3d visualisation of protein structure
     st.subheader("Protein Structure:")
     traj_output = output.replace(".pdb", "_trajectory.pdb")
     

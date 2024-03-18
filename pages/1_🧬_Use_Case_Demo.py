@@ -3,13 +3,13 @@ import demo
 
 
 st.set_page_config(
-    page_title="GenAI for Protein Design Usage Cases",
+    page_title="GenAI for Protein Design Use Case",
     page_icon="🧬",
     layout="wide",
     initial_sidebar_state="expanded",
 )
 
-st.title("Protein Design Driven by Chroma")
+st.title("Protein Design Driven by Diffusion Model")
 
 
 # the mapping between the function and use case
@@ -22,8 +22,8 @@ demoDict={
     "SecondStructureConditionGenerate":demo.ssSampleDemo,
     "SubstructureConditionGenerate":demo.substructureSampleDemo,
     # "NatureLanguageConditionGenerate":demo.natureLanguageSampleDemo,
-    "CombiningSymmetryAndSecondaryConditionGenerate":demo.cSSStructureSampleDemo,
-    "MergingSymmetryAndSubstructureConditionGenerate":demo.mSSubstructureSampleDemo,
+    "SymmetryAndSecondaryConditionGenerate":demo.cSSStructureSampleDemo,
+    "SymmetryAndSubstructureConditionGenerate":demo.mSSubstructureSampleDemo,
 }
 # sidebar for demo options
 selected_branch = st.sidebar.selectbox("Select the Function to Run:", list(demoDict.keys()))
