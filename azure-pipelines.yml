@@ -1,0 +1,52 @@
+# App Service Default Pipeline
+
+trigger:
+  branches:
+    include:
+    - '*' 
+    - refs/tags/*
+
+pool:
+  vmImage: 'ubuntu-22.04'
+
+variables:
+  isMain: $[eq(variables['Build.SourceBranch'], 'refs/heads/main')]
+
+resources:
+  repositories:
+    - repository: templates
+      name: 'factory-appservice-nreg-ec1/factory-appservice-nreg-ec1' # <project>/<repo>  
+      type: git
+      ref: refs/heads/master
+
+stages:
+  - stage: BuildAndPush
+    jobs:
+      - job: CI
+        steps:
+          # Uncomment the following line in case you need to login to the private artifacts pypi repository
+          # e.g. for consuming packages like BayBe
+          # the template will expose env. variable PIP_EXTRA_INDEX_URL which can be used in the docker build
+          #- template: pipeline-templates/artifacts-login.yml@templates          
+          
+          - template: pipeline-templates/aws-login.yml@templates # this template will expose APP_ID & APP_DESTINATION_ID as variable.
+          
+          - template: pipeline-templates/docker-login.yml@templates # this template will expose AWS_ACCOUNT_ID as variable.
+          
+          - bash: |
+              docker build \
+                --pull \
+                --cache-from $(AWS_ACCOUNT_ID).dkr.ecr.eu-central-1.amazonaws.com/$(APP_ID):main \
+                -t $(AWS_ACCOUNT_ID).dkr.ecr.eu-central-1.amazonaws.com/$(APP_ID):main \
+                -t docker-image:snapshot \
+                .
+            displayName: Build
+            env:
+              DOCKER_BUILDKIT: '1'
+              BUILDKIT_PROGRESS: 'plain'
+          
+          - bash: |
+              docker tag docker-image:snapshot $(AWS_ACCOUNT_ID).dkr.ecr.eu-central-1.amazonaws.com/$(APP_DESTINATION_ID):main
+              docker push $(AWS_ACCOUNT_ID).dkr.ecr.eu-central-1.amazonaws.com/$(APP_DESTINATION_ID):main              
+            displayName: Push (main only)
+            condition: and(succeeded(), eq(variables.isMain, 'true'))
